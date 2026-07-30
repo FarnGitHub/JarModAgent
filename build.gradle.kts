@@ -32,7 +32,6 @@ dependencies {
     }
 
     compileOnly(files("lib/legacyfix-26.7.2.jar"))
-    compileOnly(files("lib/legacyfix-2.0.jar"))
 }
 
 tasks.compileJava {
