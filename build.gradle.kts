@@ -1,8 +1,6 @@
-import java.net.URI
 
 plugins {
     java
-    `maven-publish`
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -32,6 +30,9 @@ dependencies {
     implementation("org.quiltmc.qup:json:0.2.0") {
         isTransitive = false
     }
+
+    compileOnly(files("lib/legacyfix-26.7.2.jar"))
+    compileOnly(files("lib/legacyfix-2.0.jar"))
 }
 
 tasks.compileJava {
@@ -57,33 +58,4 @@ tasks.jar {
 tasks.shadowJar {
     relocate("org.objectweb", "xyz.wagyourtail.unimined.jarmodagent.shadow.org.objectweb")
     relocate("org.quiltmc.qup.json", "xyz.wagyourtail.unimined.jarmodagent.shadow.org.quiltmc.qup.json")
-}
-
-publishing {
-    repositories {
-        maven {
-            name = "WagYourMaven"
-            url = if (project.hasProperty("version_snapshot")) {
-                URI.create("https://maven.wagyourtail.xyz/snapshots/")
-            } else {
-                URI.create("https://maven.wagyourtail.xyz/releases/")
-            }
-            credentials {
-                username = project.findProperty("mvn.user") as String? ?: System.getenv("USERNAME")
-                password = project.findProperty("mvn.key") as String? ?: System.getenv("TOKEN")
-            }
-        }
-    }
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = project.group as String
-            artifactId = project.properties["archives_base_name"] as String? ?: project.name
-            version = project.version as String
-
-            artifact(tasks["jar"]) {}
-            artifact(tasks["shadowJar"]) {
-                classifier = "all"
-            }
-        }
-    }
 }

@@ -27,7 +27,7 @@ public class TransformerListBuilder {
     }
 
     // { [targetClass] -> { [transformListUri] -> transform[] }
-    public Map<String, Map<String, List<String>>> build(TransformerManager transformerManager, IClassProvider classProvider) throws ClassNotFoundException{
+    public Map<String, Map<String, List<String>>> build(TransformerManager transformerManager, IClassProvider classProvider) {
         Map<String, Map<String, List<String>>> transformerMap = new HashMap<>();
         for (URL url : transformerUrls) {
             String patchSource = url.toString().split("!")[0];
@@ -37,7 +37,7 @@ public class TransformerListBuilder {
                     ClassNode classNode = new ClassNode();
                     ClassReader classReader = new ClassReader(classProvider.getClass(line));
                     classReader.accept(classNode, 0);
-                    Set<String> targets = transformerManager.addTransformer(classNode, true, true);
+                    Set<String> targets = transformerManager.addTransformer(classNode, true);
                     JarModder.debug("Transformer " + line + " targets " + targets);
                     for (String target : targets) {
                         transformerMap.computeIfAbsent(target, s -> new HashMap<>())
@@ -45,7 +45,7 @@ public class TransformerListBuilder {
                             .add(line);
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 e.printStackTrace();
                 System.err.println("Failed to load transformer: " + url);
                 System.exit(1);

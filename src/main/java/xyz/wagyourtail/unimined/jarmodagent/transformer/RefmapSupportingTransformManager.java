@@ -1,11 +1,7 @@
 package xyz.wagyourtail.unimined.jarmodagent.transformer;
 
-import farn.jarmodagent.DirtyHackWhatever;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.mappings.annotation.AnnotationRemap;
-import net.lenni0451.classtransform.transformer.AnnotationHandler;
-import net.lenni0451.classtransform.transformer.HandlerPosition;
-import net.lenni0451.classtransform.transformer.types.RemovingAnnotationHandler;
 import net.lenni0451.classtransform.utils.ASMUtils;
 import net.lenni0451.classtransform.utils.tree.IClassProvider;
 import org.objectweb.asm.*;
@@ -14,10 +10,12 @@ import xyz.wagyourtail.unimined.jarmodagent.JarModAgent;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class RefmapSupportingTransformManager extends TransformerManager {
 
@@ -25,7 +23,6 @@ public class RefmapSupportingTransformManager extends TransformerManager {
 
     public RefmapSupportingTransformManager(IClassProvider classProvider) {
         super(classProvider);
-        this.addCustomAnnotationHandler(new DirtyHackWhatever(), HandlerPosition.POST);
     }
 
     public void addRefmap(Map<String, Map<String, String>> refmap) {
@@ -35,7 +32,7 @@ public class RefmapSupportingTransformManager extends TransformerManager {
     }
 
     @Override
-    public Set<String> addTransformer(ClassNode classNode, boolean requireAnnotation, final boolean retransformClasses) {
+    public Set<String> addTransformer(ClassNode classNode, boolean requireAnnotation) {
         // replace strings in annotations
         Map<String, String> refmap = this.refmap.get(classNode.name);
         if (refmap != null) {
@@ -52,9 +49,9 @@ public class RefmapSupportingTransformManager extends TransformerManager {
                     throw new RuntimeException(e);
                 }
             }
-            return super.addTransformer(copy, requireAnnotation, retransformClasses);
+            return super.addTransformer(copy, requireAnnotation);
         } else {
-            return super.addTransformer(classNode, requireAnnotation, retransformClasses);
+            return super.addTransformer(classNode, requireAnnotation);
         }
     }
 

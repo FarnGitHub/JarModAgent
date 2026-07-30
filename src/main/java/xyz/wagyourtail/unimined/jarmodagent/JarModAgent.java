@@ -1,5 +1,6 @@
 package xyz.wagyourtail.unimined.jarmodagent;
 
+import farn.legacyfix_handler.LFPatchHelper;
 import xyz.wagyourtail.unimined.jarmodagent.transformer.JarModder;
 
 import java.io.File;
@@ -20,7 +21,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 public class JarModAgent {
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = Boolean.getBoolean("jma.debug");
     public static final String VERSION = JarModAgent.class.getPackage().getImplementationVersion();
 
     /**
@@ -85,8 +86,8 @@ public class JarModAgent {
         System.out.println("[JarModAgent] Starting agent");
         System.out.println("[JarModAgent] Version: " + VERSION);
         JarModder jarModder = new JarModder(instrumentation);
-        jarModder.register(new File[0]);
-        instrumentation.addTransformer(jarModder, true);
+        jarModder.register(agentArgs, new File[0]);
+        instrumentation.addTransformer(jarModder);
         System.out.println("[JarModAgent] Agent started");
 
         String chain = System.getProperty("jma.chainAgent");
@@ -121,11 +122,11 @@ public class JarModAgent {
      * 2: output jar path
      * @param args
      */
-    public static void main(String[] args) throws IOException, IllegalClassFormatException, ClassNotFoundException {
+    public static void main(String[] args) throws IOException, IllegalClassFormatException {
         System.setProperty(DISABLE_MODS_FOLDER, "true");
         System.setProperty(DISABLE_INSERT_INTO_SYSTEM_CL, "true");
-        JarModder jarModder = new JarModder(null);
-        jarModder.register(new File[] {
+        JarModder jarModder = new JarModder( null);
+        jarModder.register(null, new File[] {
             new File(args[0])
         });
         String[] classpath = args[1].split(File.pathSeparator);

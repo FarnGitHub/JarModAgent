@@ -1,5 +1,6 @@
 package xyz.wagyourtail.unimined.jarmodagent.transformer;
 
+import farn.legacyfix_handler.LFPatchHelper;
 import net.lenni0451.classtransform.TransformerManager;
 import xyz.wagyourtail.unimined.jarmodagent.JarModAgent;
 
@@ -68,7 +69,7 @@ public class JarModder implements ClassFileTransformer {
 
     }
 
-    public void register(File... extra) throws IOException, ClassNotFoundException {
+    public void register(String agentArgs, File... extra) throws IOException {
         TransformerListBuilder transformBuilder = new TransformerListBuilder(classProvider.priorityClasspath);
         RefmapBuilder refmapBuilder = new RefmapBuilder(classProvider.priorityClasspath);
         System.out.println("[JarModAgent] Registering transforms");
@@ -87,6 +88,7 @@ public class JarModder implements ClassFileTransformer {
         refmapBuilder.build(transformerManager);
         System.out.println("[JarModAgent] Building transform list");
         transformerList = transformBuilder.build(transformerManager, classProvider);
+        LFPatchHelper.patch(this.transformerManager);
         debug("Transformer list: " + transformerList);
         debug("Refmap list: " + transformerManager.refmap);
         System.out.println("[JarModAgent] Building transform list done, " + transformerList.size() + " classes targeted");
@@ -131,12 +133,23 @@ public class JarModder implements ClassFileTransformer {
         JarFile jf = new JarFile(file);
         System.out.println("[JarModAgent] Bootstrapping " + file.getName());
         classProvider.priorityClasspath.addURL(file.toURI().toURL());
+        //TODO: maybe not to bootstrap classloader?
         if (!Boolean.getBoolean(JarModAgent.DISABLE_INSERT_INTO_SYSTEM_CL)) {
             instrumentation.appendToSystemClassLoaderSearch(jf);
         }
         // get transforms from manifest
         Manifest mf = jf.getManifest();
         if (mf != null) {
+            String premain = mf.getMainAttributes().getValue("Premain-Class");
+            if(premain != null) {
+                if(premain.equals("uk.betacraft.legacyfix.Agent")) {
+                    LFPatchHelper.hasLF = 2;
+                    return 0;
+                } else if(premain.equals("uk.betacraft.legacyfix.LegacyFixAgent")) {
+                    LFPatchHelper.hasLF = 1;
+                    return 0;
+                }
+            }
             String transforms = mf.getMainAttributes().getValue(JarModAgent.JMA_TRANSFORMS_PROPERTY);
             if (transforms != null) {
                 for (String transformer : transforms.split(",")) {
