@@ -61,7 +61,6 @@ public class JarModder implements ClassFileTransformer {
         }
 
         transformerManager = new RefmapSupportingTransformManager(classProvider);
-        transformerManager.hookInstrumentation(instrumentation);
         debug("Args: ");
         debug("  Transformers: " + Arrays.toString(transformers));
         debug("  Priority classpath: " + Arrays.toString(classProvider.priorityClasspath.getURLs()));
@@ -85,10 +84,10 @@ public class JarModder implements ClassFileTransformer {
         for (String refmap : refmaps) {
             refmapBuilder.addRefmap(refmap);
         }
+        LFPatchHelper.patch(this.transformerManager);
         refmapBuilder.build(transformerManager);
         System.out.println("[JarModAgent] Building transform list");
         transformerList = transformBuilder.build(transformerManager, classProvider);
-        LFPatchHelper.patch(this.transformerManager);
         debug("Transformer list: " + transformerList);
         debug("Refmap list: " + transformerManager.refmap);
         System.out.println("[JarModAgent] Building transform list done, " + transformerList.size() + " classes targeted");
