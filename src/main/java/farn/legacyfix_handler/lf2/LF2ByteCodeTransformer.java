@@ -16,11 +16,10 @@ public class LF2ByteCodeTransformer implements IBytecodeTransformer {
 
     @Override
     public byte[] transform(String className, byte[] bytecode, boolean calculateStackMapFrames) {
-        List<CtClass> ctClassList = CTTransformerList.getCTTransformer(className);
-        if(ctClassList != null) {
+        CtClass ctClass = CTTransformerList.getCTTransformer(className);
+        if(ctClass != null) {
             try {
-                for(CtClass ctClass : ctClassList)
-                    bytecode = ctClass.toBytecode();
+                bytecode = ctClass.toBytecode();
             } catch (Exception e) {
                 throw new RuntimeException();
             }

@@ -7,16 +7,14 @@ import java.util.HashMap;
 import java.util.List;
 
 public class CTTransformerList {
-    public static HashMap<String, List<CtClass>> ctClassList;
+    public static HashMap<String, CtClass> ctClassList;
 
     public static void add(CtClass ctClass) {
         if(ctClassList == null) ctClassList = new HashMap<>();
-        List<CtClass> theList =
-                ctClassList.computeIfAbsent(ctClass.getName(), k -> new ArrayList<>());
-        theList.add(ctClass);
+        ctClassList.put(ctClass.getName(), ctClass);
     }
 
-    public static List<CtClass> getCTTransformer(String className) {
+    public static CtClass getCTTransformer(String className) {
         return ctClassList.get(className);
     }
 }
