@@ -86,7 +86,7 @@ public class JarModAgent {
         System.out.println("[JarModAgent] Starting agent");
         System.out.println("[JarModAgent] Version: " + VERSION);
         JarModder jarModder = new JarModder(instrumentation);
-        jarModder.register(agentArgs, new File[0]);
+        jarModder.register(new File[0]);
         instrumentation.addTransformer(jarModder);
         System.out.println("[JarModAgent] Agent started");
 
@@ -126,9 +126,7 @@ public class JarModAgent {
         System.setProperty(DISABLE_MODS_FOLDER, "true");
         System.setProperty(DISABLE_INSERT_INTO_SYSTEM_CL, "true");
         JarModder jarModder = new JarModder( null);
-        jarModder.register(null, new File[] {
-            new File(args[0])
-        });
+        jarModder.register(new File(args[0]));
         String[] classpath = args[1].split(File.pathSeparator);
         URL[] urls = new URL[classpath.length + 1];
         for (int i = 0; i < classpath.length; i++) {

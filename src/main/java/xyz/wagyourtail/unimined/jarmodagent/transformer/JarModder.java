@@ -69,7 +69,7 @@ public class JarModder implements ClassFileTransformer {
 
     }
 
-    public void register(String agentArgs, File... extra) throws IOException {
+    public void register(File... extra) throws IOException {
         TransformerListBuilder transformBuilder = new TransformerListBuilder(classProvider.priorityClasspath);
         RefmapBuilder refmapBuilder = new RefmapBuilder(classProvider.priorityClasspath);
         System.out.println("[JarModAgent] Registering transforms");

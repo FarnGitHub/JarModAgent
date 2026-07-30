@@ -1,6 +1,7 @@
 
 plugins {
     java
+    `maven-publish`
     id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
@@ -57,4 +58,13 @@ tasks.jar {
 tasks.shadowJar {
     relocate("org.objectweb", "xyz.wagyourtail.unimined.jarmodagent.shadow.org.objectweb")
     relocate("org.quiltmc.qup.json", "xyz.wagyourtail.unimined.jarmodagent.shadow.org.quiltmc.qup.json")
+}
+
+// Disable regular jar and bind shadowJar to build/publish routines
+tasks.named("jar") {
+    enabled = false
+}
+
+artifacts {
+    archives(tasks.shadowJar)
 }
