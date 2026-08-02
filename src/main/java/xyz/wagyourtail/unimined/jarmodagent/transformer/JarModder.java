@@ -204,7 +204,7 @@ public class JarModder implements ClassFileTransformer {
         return null;
     }
 
-    public byte[] patch(String className, Supplier<URL> base, Map<String, URL> priorityUrls) throws IOException {
+    public byte[] patch(String className, Supplier<URL> base, Map<String, URL> priorityUrls, byte[] fallback) throws IOException {
         if (priorityUrls.size() > 1) {
             // multiple in priority classpath
             // check if we have runtime transforms registered from each location
@@ -221,25 +221,24 @@ public class JarModder implements ClassFileTransformer {
                         " are using a mod that claims to support the other; jarmod the supported one directly, so it's lower priority.");
                 System.exit(1);
                 return null;
-            } else if (priorityUrls.size() == 0) {
+            } else if (priorityUrls.isEmpty()) {
                 return patch(className, base.get());
             } else {
                 return patch(className, (URL) priorityUrls.values().toArray()[0]);
             }
-        } else if (priorityUrls.size() != 0) {
+        } else if (!priorityUrls.isEmpty()) {
             // once in priority classpath
             debug("Found class override: \"" + className + "\" in priority classpath");
             debug(priorityUrls.values().toArray()[0].toString());
             // doesn't need runtime transform stuff, so we can return the bytes from the priority classpath
-            return readAllBytes(((URL) priorityUrls.values().toArray()[0]).openStream());
+            return LFPatchHelper.transformed(dot(className), readAllBytes(((URL) priorityUrls.values().toArray()[0]).openStream()));
         }
 
         if (hasRuntimePatches(className)) {
             debug("Found class with runtime patches: \"" + className + "\"");
             return patch(className, base.get());
         }
-        return null;
-
+        return LFPatchHelper.transformed(dot(className), fallback);
     }
 
     private String bytesToHex(byte[] hash) {
@@ -313,7 +312,7 @@ public class JarModder implements ClassFileTransformer {
                     return null;
                 }
                 return (URL) urls.values().toArray()[0];
-            }, priorityUrls);
+            }, priorityUrls, classfileBuffer);
         } catch (IOException e) {
             System.err.println("[JarModAgent] Failed to transform class: \"" + className + "\"" +
                 " with error:");
