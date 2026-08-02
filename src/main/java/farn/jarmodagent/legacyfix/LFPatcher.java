@@ -15,17 +15,21 @@ public class LFPatcher implements ExtraTransformerRegister {
         for(JarFile jar : jars) {
             try {
                 Manifest mf = jar.getManifest();
-                if (mf != null) {
-                    String premain = mf.getMainAttributes().getValue("Premain-Class");
-                    if(premain != null) {
-                        if(premain.equals("uk.betacraft.legacyfix.Agent")) {
-                            System.out.println("[JarModAgent] Found LegacyFix, Apply Patch");
-                            manager.addBytecodeTransformer(new LF3Transformer());
-                        }
-                    }
-                }
+                if(mf == null) continue;
+
+                String premain = mf.getMainAttributes().getValue("Premain-Class");
+                if(premain == null) continue;
+
+                if(!premain.startsWith("uk.betacraft.legacyfix")) continue;
+
+                System.out.println("[JarModAgent] Found LegacyFix, Initialize LegacyFix..");
+                manager.addBytecodeTransformer(new LF3Transformer());
+                return;
+
             } catch (Exception ignored) {
             }
         }
+
+        System.out.println("[JarModAgent] LegacyFix not found");
     }
 }

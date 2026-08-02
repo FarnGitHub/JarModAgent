@@ -49,7 +49,7 @@ public class LF3Transformer implements IBytecodeTransformer {
 
                     ctClass.detach();
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to apply CtTransformer on class \"" + name + "\"", e);
+                    throw new RuntimeException("[LegacyFix] Failed to apply CtTransformer on class \"" + name + "\"", e);
                 }
             }
 
@@ -60,7 +60,7 @@ public class LF3Transformer implements IBytecodeTransformer {
                         bytecode = transformed;
                     }
                 } catch (Exception e) {
-                    throw new RuntimeException("Failed to apply transformer on class \"" + name + "\"", e);
+                    throw new RuntimeException("[LegacyFix] Failed to apply transformer on class \"" + name + "\"", e);
                 }
             }
 
