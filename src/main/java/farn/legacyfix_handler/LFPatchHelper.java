@@ -4,9 +4,6 @@ import farn.legacyfix_handler.lf3.LF3BytecodeTransformer;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.transformer.IBytecodeTransformer;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class LFPatchHelper {
     public static int hasLF = 0;
     public static IBytecodeTransformer transformer;
@@ -24,6 +21,7 @@ public class LFPatchHelper {
     }
 
     public static byte[] transformed(String className, byte[] bytecode) {
+        if(transformer == null) return bytecode;
         return transformer.transform(className, bytecode, false);
     }
 
