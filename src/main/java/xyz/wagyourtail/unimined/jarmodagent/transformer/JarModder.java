@@ -1,6 +1,7 @@
 package xyz.wagyourtail.unimined.jarmodagent.transformer;
 
 import farn.jarmodagent.ExtraTransformerRegister;
+import farn.jarmodagent.legacyfix.LFPatcher;
 import xyz.wagyourtail.unimined.jarmodagent.JarModAgent;
 
 import java.io.ByteArrayOutputStream;
@@ -93,7 +94,7 @@ public class JarModder implements ClassFileTransformer {
         refmapBuilder.build(transformerManager);
         System.out.println("[JarModAgent] Building transform list");
         transformerList = transformBuilder.build(transformerManager, classProvider);
-        transfomerRegisters.add("farn.legacyfix_handler.LFPatcher");
+        transfomerRegisters.add(LFPatcher.class.getName());
         for (String registers : transfomerRegisters) {
             try {
                 Class<?> clazz = loadClass(registers);

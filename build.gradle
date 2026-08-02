@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'com.gradleup.shadow' version '9.6.1'
+}
+
+version = property("version")
+group = property("group")
+
+base {
+    archivesName = project.archives_base_name
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://maven.quiltmc.org/repository/release'
+    }
+}
+
+dependencies {
+    // class transform
+    implementation 'net.lenni0451.classtransform:core:1.15.1'
+
+    // qup
+    implementation('org.quiltmc.qup:json:0.2.0') {
+        transitive = false
+    }
+
+    compileOnly files('/lib/legacyfix-26.7.2.jar')
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+
+    if (JavaVersion.current().isJava9Compatible()) {
+        options.release = 8
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+            'Premain-Class': 'xyz.wagyourtail.unimined.jarmodagent.JarModAgent',
+            'Main-Class': 'xyz.wagyourtail.unimined.jarmodagent.JarModAgent',
+            'Implementation-Version': project.version,
+            'Can-Redefine-Classes': true,
+            'Can-Retransform-Classes': true
+        )
+    }
+}
+
+shadowJar {
+    relocate 'org.objectweb', 'farn.jarmodagent.shadow.org.objectweb'
+    relocate 'org.quiltmc.qup.json', 'farn.jarmodagent.shadow.org.quiltmc.qup.json'
+}
+
+// Disable regular jar and bind shadowJar to build/publish routines
+jar {
+    enabled = false
+}
