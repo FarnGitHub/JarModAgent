@@ -98,12 +98,8 @@ public class JarModder implements ClassFileTransformer {
         for (String registers : transfomerRegisters) {
             try {
                 Class<?> clazz = loadClass(registers);
-                if(clazz.isAssignableFrom(ExtraTransformerRegister.class)) {
-                    ExtraTransformerRegister init = (ExtraTransformerRegister)clazz.getConstructor().newInstance();
-                    init.registerTransformer(jars, this.transformerManager);
-                } else {
-                    throw new RuntimeException("[JarModAgent] " + registers + " doesn't implement ExtraTransformerRegister");
-                }
+                ExtraTransformerRegister init = (ExtraTransformerRegister)clazz.getConstructor().newInstance();
+                init.registerTransformer(jars, this.transformerManager);
             } catch (Exception e) {
                 System.err.println("[JarModAgent] Failed to initialize " + registers);
                 e.printStackTrace();
