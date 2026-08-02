@@ -1,7 +1,6 @@
 package xyz.wagyourtail.unimined.jarmodagent.transformer;
 
-import farn.legacyfix_handler.LFPatchHelper;
-import net.lenni0451.classtransform.TransformerManager;
+import farn.jarmodagent.ExtraTransformerRegister;
 import xyz.wagyourtail.unimined.jarmodagent.JarModAgent;
 
 import java.io.ByteArrayOutputStream;
@@ -31,8 +30,11 @@ public class JarModder implements ClassFileTransformer {
     private final Instrumentation instrumentation;
     private final File modsFolder;
     private final RefmapSupportingTransformManager transformerManager;
+    private final String[] transformerRegister;
 
     private Map<String, Map<String, List<String>>> transformerList;
+
+    private static final List<JarFile> jars = new ArrayList<>();
 
     public JarModder(Instrumentation instrumentation) {
         this.instrumentation = instrumentation;
@@ -43,6 +45,9 @@ public class JarModder implements ClassFileTransformer {
         refmaps = Optional.ofNullable(System.getProperty(JarModAgent.REFMAPS))
             .map(it -> it.split(File.pathSeparator))
             .orElse(new String[0]);
+        transformerRegister = Optional.ofNullable(System.getProperty(JarModAgent.TRANSFORMER_REGISTER))
+                .map(it -> it.split(File.pathSeparator))
+                .orElse(new String[0]);
         classProvider = new ClassProviderWithFallback(new PriorityClasspath(Optional.ofNullable(System.getProperty(JarModAgent.PRIORITY_CLASSPATH))
             .map(it -> Arrays.stream(
                 it.split(File.pathSeparator)).map(e -> {
@@ -73,10 +78,11 @@ public class JarModder implements ClassFileTransformer {
         RefmapBuilder refmapBuilder = new RefmapBuilder(classProvider.priorityClasspath);
         System.out.println("[JarModAgent] Registering transforms");
         debug("Transformers: " + Arrays.toString(transformers));
+        List<String> transfomerRegisters = new ArrayList<>(Arrays.asList(this.transformerRegister));
         if (modsFolder != null)
-            boostrapModsFolder(transformBuilder, refmapBuilder);
+            boostrapModsFolder(transformBuilder, refmapBuilder, transfomerRegisters);
         for (File file : extra) {
-            boostrapModJar(file, transformBuilder, refmapBuilder);
+            boostrapModJar(file, transformBuilder, refmapBuilder, transfomerRegisters);
         }
         for (String transformer : transformers) {
             transformBuilder.addTransformer(transformer);
@@ -87,13 +93,35 @@ public class JarModder implements ClassFileTransformer {
         refmapBuilder.build(transformerManager);
         System.out.println("[JarModAgent] Building transform list");
         transformerList = transformBuilder.build(transformerManager, classProvider);
-        LFPatchHelper.patch(this.transformerManager);
+        transfomerRegisters.add("farn.legacyfix_handler.LFPatcher");
+        for (String registers : transfomerRegisters) {
+            try {
+                Class<?> clazz = loadClass(registers);
+                if(clazz.isAssignableFrom(ExtraTransformerRegister.class)) {
+                    ExtraTransformerRegister init = (ExtraTransformerRegister)clazz.getConstructor().newInstance();
+                    init.registerTransformer(jars, this.transformerManager);
+                } else {
+                    throw new RuntimeException("[JarModAgent] " + registers + " doesn't implement ExtraTransformerRegister");
+                }
+            } catch (Exception e) {
+                System.err.println("[JarModAgent] Failed to initialize " + registers);
+                e.printStackTrace();
+            }
+        }
         debug("Transformer list: " + transformerList);
         debug("Refmap list: " + transformerManager.refmap);
         System.out.println("[JarModAgent] Building transform list done, " + transformerList.size() + " classes targeted");
     }
 
-    private void boostrapModsFolder(TransformerListBuilder builder, RefmapBuilder refmapBuilder) throws IOException {
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+        try {
+            return classProvider.priorityClasspath.loadClass(name);
+        } catch (ClassNotFoundException ex) {
+            return getClass().getClassLoader().loadClass(name);
+        }
+    }
+
+    private void boostrapModsFolder(TransformerListBuilder builder, RefmapBuilder refmapBuilder, List<String> initializers) throws IOException {
         System.out.println("[JarModAgent] Bootstrapping mods folder");
         Deque<File> files = new ArrayDeque<>();
         File[] modsFolderFiles = modsFolder.listFiles();
@@ -109,7 +137,7 @@ public class JarModder implements ClassFileTransformer {
             File file = files.removeFirst();
             if (file.isFile() && (file.getName().endsWith(".jar") || file.getName().endsWith(".zip"))) {
                 try {
-                    j += boostrapModJar(file, builder, refmapBuilder);
+                    j += boostrapModJar(file, builder, refmapBuilder, initializers);
                     i++;
                 } catch (IOException e) {
                     System.out.println("[JarModAgent] Failed to bootstrap " + file.getName());
@@ -126,7 +154,7 @@ public class JarModder implements ClassFileTransformer {
         System.out.println("[JarModAgent] Bootstrapped " + i + " mods, with " + j + " transforms");
     }
 
-    private int boostrapModJar(File file, TransformerListBuilder builder, RefmapBuilder refmapBuilder) throws IOException {
+    private int boostrapModJar(File file, TransformerListBuilder builder, RefmapBuilder refmapBuilder, List<String> initalizers) throws IOException {
         int j = 0;
         file = file.getCanonicalFile();
         JarFile jf = new JarFile(file);
@@ -139,16 +167,6 @@ public class JarModder implements ClassFileTransformer {
         // get transforms from manifest
         Manifest mf = jf.getManifest();
         if (mf != null) {
-            String premain = mf.getMainAttributes().getValue("Premain-Class");
-            if(premain != null) {
-                if(premain.equals("uk.betacraft.legacyfix.Agent")) {
-                    LFPatchHelper.hasLF = 2;
-                    return 0;
-                } else if(premain.equals("uk.betacraft.legacyfix.LegacyFixAgent")) {
-                    LFPatchHelper.hasLF = 1;
-                    return 0;
-                }
-            }
             String transforms = mf.getMainAttributes().getValue(JarModAgent.JMA_TRANSFORMS_PROPERTY);
             if (transforms != null) {
                 for (String transformer : transforms.split(",")) {
@@ -162,6 +180,12 @@ public class JarModder implements ClassFileTransformer {
                     refmapBuilder.addRefmap(refmap);
                 }
             }
+
+            String initializers = mf.getMainAttributes().getValue(JarModAgent.JMA_TRANSFORMER_REGISTER_PROPERTY);
+            if (initializers != null) {
+                Collections.addAll(initalizers, initializers.split(" "));
+            }
+            jars.add(jf);
         }
         return j;
     }
@@ -170,11 +194,11 @@ public class JarModder implements ClassFileTransformer {
         return className.replace('/', '.');
     }
 
-    public byte[] onlyInPriority(String className, Map<String, URL> priorityUrls) throws IOException {
+    public byte[] onlyInPriority(String className, Map<String, URL> priorityUrls, byte[] fallback) throws IOException {
         if (!priorityUrls.isEmpty()) {
             //single in priority classpath
             if (priorityUrls.size() == 1) {
-                return readAllBytes(((URL) priorityUrls.values().toArray()[0]).openStream());
+                return patch(className, ((URL) priorityUrls.values().toArray()[0]));
             }
             // multiple in priority classpath
             debug("Found multiple classes: \"" + className + "\" in priority classpath");
@@ -201,7 +225,7 @@ public class JarModder implements ClassFileTransformer {
         }
         debug("Found class: \"" + className + "\" only in priority classpath");
         // doesn't need any transform stuff as it's only once
-        return null;
+        return fallback != null ? patch(className, fallback) : null;
     }
 
     public byte[] patch(String className, Supplier<URL> base, Map<String, URL> priorityUrls, byte[] fallback) throws IOException {
@@ -231,14 +255,14 @@ public class JarModder implements ClassFileTransformer {
             debug("Found class override: \"" + className + "\" in priority classpath");
             debug(priorityUrls.values().toArray()[0].toString());
             // doesn't need runtime transform stuff, so we can return the bytes from the priority classpath
-            return LFPatchHelper.transformed(dot(className), readAllBytes(((URL) priorityUrls.values().toArray()[0]).openStream()));
+            return patch(className, (URL) priorityUrls.values().toArray()[0]);
         }
 
         if (hasRuntimePatches(className)) {
             debug("Found class with runtime patches: \"" + className + "\"");
             return patch(className, base.get());
         }
-        return LFPatchHelper.transformed(dot(className), fallback);
+        return fallback != null ? patch(className, fallback) : null;
     }
 
     private String bytesToHex(byte[] hash) {
@@ -287,7 +311,7 @@ public class JarModder implements ClassFileTransformer {
             }
             if (urls.isEmpty()) {
                 // only in priority classpath
-                return onlyInPriority(className, priorityUrls);
+                return onlyInPriority(className, priorityUrls, classfileBuffer);
             }
             return patch(className, () -> {
                 if (urls.size() > 1) {

@@ -1,4 +1,4 @@
-package farn.legacyfix_handler.lf3;
+package farn.jarmodagent.legacyfix;
 
 import javassist.ByteArrayClassPath;
 import javassist.ClassPool;
@@ -10,12 +10,12 @@ import uk.betacraft.legacyfix.patch.api.Transformer;
 
 import java.util.List;
 
-public class LF3BytecodeTransformer implements IBytecodeTransformer {
+public class LF3Transformer implements IBytecodeTransformer {
 
     private final Patcher patcher;
     private final ClassPool mainPool;
 
-    public LF3BytecodeTransformer() {
+    public LF3Transformer() {
         ClassPool pool = new ClassPool(true);
         this.mainPool = new ClassPool(pool);
         ClassPool ctPool = new ClassPool(ClassPool.getDefault());

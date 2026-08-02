@@ -1,6 +1,5 @@
 package xyz.wagyourtail.unimined.jarmodagent;
 
-import farn.legacyfix_handler.LFPatchHelper;
 import xyz.wagyourtail.unimined.jarmodagent.transformer.JarModder;
 
 import java.io.File;
@@ -36,6 +35,12 @@ public class JarModAgent {
     public static final String JMA_TRANSFORMS_PROPERTY = "JarModAgent-Transforms";
 
     /**
+     * property for META-INF/MANIFEST.MF to specify any {@link farn.jarmodagent.ExtraTransformerRegister}'s to load.
+     * @since 0.1.4
+     */
+    public static final String JMA_TRANSFORMER_REGISTER_PROPERTY = "JarModAgent-ExtraTransformerRegister";
+
+    /**
      * File.pathSeparator separated list of transformers to load. these are files containing
      * a list of classes for ClassTransform to load, separated by newlines.
      */
@@ -46,6 +51,12 @@ public class JarModAgent {
      * @since 0.1.3
      */
     public static final String REFMAPS = "jma.refmaps";
+
+    /**
+     * File.pathSeparator separated list of {@link farn.jarmodagent.ExtraTransformerRegister}'s to load.
+     * @since 0.1.4
+     */
+    public static final String TRANSFORMER_REGISTER = "jma.extra.transformers.register";
 
     /**
      * File.pathSeparator separated list of files that make up the "priority classpath".
