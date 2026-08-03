@@ -21,11 +21,14 @@ public class ClassProviderWithFallback implements IClassProvider {
     }
 
     @Override
-    public byte[] getClass(String name) {
+    public byte[] getClass(String name) throws ClassNotFoundException {
         InputStream is = priorityClasspath.getResourceAsStream(name.replace('.', '/') + ".class");
-        if (is == null && fallback != null) {
+        if (is == null && fallback != null)
             is = fallback.getResourceAsStream(name.replace('.', '/') + ".class");
-        }
+
+        if(is == null)
+            throw new ClassNotFoundException(name);
+
         return JarModder.readAllBytes(is);
     }
 

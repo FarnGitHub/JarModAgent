@@ -97,86 +97,9 @@ public class JarModAgent {
         System.out.println("[JarModAgent] Starting agent");
         System.out.println("[JarModAgent] Version: " + VERSION);
         JarModder jarModder = new JarModder(instrumentation);
-        jarModder.register(new File[0]);
+        jarModder.register();
         instrumentation.addTransformer(jarModder);
         System.out.println("[JarModAgent] Agent started");
-
-        String chain = System.getProperty("jma.chainAgent");
-        if (chain != null) {
-            System.out.println("[JarModAgent] Chaining agent " + chain);
-            JarFile jarFile = new JarFile(chain);
-            // get premain class
-            String premainClass = jarFile.getManifest().getMainAttributes().getValue("Premain-Class");
-            if (premainClass == null) {
-                throw new RuntimeException("Premain-Class not found in manifest");
-            }
-            instrumentation.appendToSystemClassLoaderSearch(jarFile);
-            // load premain class
-            try {
-                Class<?> premain = Class.forName(premainClass, true, ClassLoader.getSystemClassLoader());
-                // invoke premain method
-                Method premainMethod = premain.getDeclaredMethod("premain", String.class, Instrumentation.class);
-                premainMethod.invoke(null, agentArgs, instrumentation);
-            } catch (Exception e) {
-                System.err.println("[JarModAgent] Failed to chain agent " + chain);
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * this endpoint is for statically transforming the jar file.
-     * this is used for the gradle plugin, so I don't have to include lenni/classtransform in unimined.
-     * args:
-     * 0: path to input jar
-     * 1: classpath, File.pathSeparator separated
-     * 2: output jar path
-     * @param args
-     */
-    public static void main(String[] args) throws IOException, IllegalClassFormatException {
-        System.setProperty(DISABLE_MODS_FOLDER, "true");
-        System.setProperty(DISABLE_INSERT_INTO_SYSTEM_CL, "true");
-        JarModder jarModder = new JarModder( null);
-        jarModder.register(new File(args[0]));
-        String[] classpath = args[1].split(File.pathSeparator);
-        URL[] urls = new URL[classpath.length + 1];
-        for (int i = 0; i < classpath.length; i++) {
-            urls[i] = new File(classpath[i]).toURI().toURL();
-        }
-        urls[urls.length - 1] = new File(args[0]).toURI().toURL();
-        URLClassLoader loader = new URLClassLoader(urls, JarModAgent.class.getClassLoader());
-        Set<String> targets = jarModder.getTargetClasses();
-        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(Paths.get(args[2]), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-            try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(Paths.get(args[0])))) {
-                ZipEntry entry;
-                while ((entry = zis.getNextEntry()) != null) {
-                    zos.putNextEntry(entry);
-                    if (entry.isDirectory()) {
-                        zos.closeEntry();
-                        continue;
-                    }
-                    // in case transforms itself :concern:
-                    if (entry.getName().endsWith(".class")) {
-                        String className = entry.getName().substring(0, entry.getName().length() - 6);
-                        if (targets.contains(JarModder.dot(className))) continue;
-                    }
-                    zos.write(JarModder.readAllBytes(zis));
-                    zos.closeEntry();
-                }
-            }
-            for (String targetClass : targets) {
-                zos.putNextEntry(new ZipEntry(targetClass.replace('.', '/') + ".class"));
-                zos.write(jarModder.transform(loader, targetClass.replace('.', '/'), null, null, JarModder.readAllBytes(Objects.requireNonNull(loader.getResourceAsStream(targetClass.replace('.', '/') + ".class")))));
-                zos.closeEntry();
-            }
-            // write net/lenni0451/classtransform/InjectionCallback to jar
-            zos.putNextEntry(new ZipEntry("net/lenni0451/classtransform/InjectionCallback.class"));
-            zos.write(JarModder.readAllBytes(Objects.requireNonNull(loader.getResourceAsStream("net/lenni0451/classtransform/InjectionCallback.class"))));
-            zos.closeEntry();
-        } catch (Exception e) {
-            Files.delete(Paths.get(args[2]));
-            throw e;
-        }
     }
 
 }

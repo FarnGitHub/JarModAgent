@@ -64,6 +64,8 @@ jar {
 }
 
 shadowJar {
+    archiveClassifier = "all"
+
     relocate 'org.objectweb', 'farn.jarmodagent.shadow.org.objectweb'
     relocate 'org.quiltmc.qup.json', 'farn.jarmodagent.shadow.org.quiltmc.qup.json'
 }
@@ -71,9 +73,11 @@ shadowJar {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = property("maven_group")
+            from components.java
+
+            groupId = project.group
             artifactId = project.archives_base_name
-            version = property("version")
+            version = project.version
         }
     }
 }

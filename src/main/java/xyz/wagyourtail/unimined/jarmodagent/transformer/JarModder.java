@@ -398,10 +398,6 @@ public class JarModder implements ClassFileTransformer {
     }
 
 
-    public Set<String> getTargetClasses() {
-        return transformerList.keySet();
-    }
-
     public static byte[] readAllBytes(InputStream is) {
         byte[] buffer = new byte[8192];
         int bytesRead;
