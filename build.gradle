@@ -25,6 +25,7 @@ repositories {
     maven {
         url = 'https://maven.quiltmc.org/repository/release'
     }
+    maven { url 'https://jitpack.io' }
     flatDir {
         dirs 'libs'
     }
@@ -70,4 +71,13 @@ shadowJar {
 // Disable regular jar and bind shadowJar to build/publish routines
 jar {
     enabled = false
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.shadow
+            artifact shadowJar
+        }
+    }
 }
