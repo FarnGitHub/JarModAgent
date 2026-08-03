@@ -5,7 +5,7 @@ plugins {
 }
 
 version = property("version")
-group = property("group")
+group = property("maven_group")
 
 base {
     archivesName = project.archives_base_name
@@ -76,9 +76,9 @@ jar {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId = 'com.github.FarnGitHub.jarmodagent'
+            groupId = property("maven_group")
             artifactId = project.archives_base_name
-            version = '1.2.1'
+            version = property("version")
         }
     }
 }
