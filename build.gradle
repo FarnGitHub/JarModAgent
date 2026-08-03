@@ -39,7 +39,7 @@ dependencies {
         transitive = false
     }
 
-    compileOnly files('/libs/legacyfix-26.7.2.jar')
+    compileOnly name: 'legacyfix', version: '26.7.2'
 }
 
 compileJava {
