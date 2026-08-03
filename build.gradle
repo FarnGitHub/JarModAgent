@@ -25,6 +25,9 @@ repositories {
     maven {
         url = 'https://maven.quiltmc.org/repository/release'
     }
+    flatDir {
+        dirs 'libs'
+    }
 }
 
 dependencies {
@@ -36,7 +39,7 @@ dependencies {
         transitive = false
     }
 
-    compileOnly files('/lib/legacyfix-26.7.2.jar')
+    compileOnly files('/libs/legacyfix-26.7.2.jar')
 }
 
 compileJava {

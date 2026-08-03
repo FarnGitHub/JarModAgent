@@ -26,11 +26,10 @@ public class LF3Transformer implements IBytecodeTransformer {
 
     @Override
     public byte[] transform(String name, byte[] bytecode, boolean calculateStackMapFrames) {
-        if (bytecode == null) {
-            return bytecode;
-        } else if (name.startsWith("javassist")) {
-            return bytecode;
+        if (bytecode == null || name.startsWith("javassist")) {
+            return null;
         } else {
+            boolean modified = false;
             List<CtTransformer> ctTransformers = this.patcher.getCtTransformers().get(name);
             if (ctTransformers != null && !ctTransformers.isEmpty()) {
                 try {
@@ -45,6 +44,7 @@ public class LF3Transformer implements IBytecodeTransformer {
 
                     if (ctClass.isModified()) {
                         bytecode = ctClass.toBytecode();
+                        modified = true;
                     }
 
                     ctClass.detach();
@@ -58,13 +58,14 @@ public class LF3Transformer implements IBytecodeTransformer {
                     byte[] transformed = transformer.transform(name, bytecode);
                     if (transformed != null) {
                         bytecode = transformed;
+                        modified = true;
                     }
                 } catch (Exception e) {
                     throw new RuntimeException("[LegacyFix] Failed to apply transformer on class \"" + name + "\"", e);
                 }
             }
 
-            return bytecode;
+            return modified ? bytecode : null;
         }
     }
 }
