@@ -68,11 +68,6 @@ shadowJar {
     relocate 'org.quiltmc.qup.json', 'farn.jarmodagent.shadow.org.quiltmc.qup.json'
 }
 
-// Disable regular jar and bind shadowJar to build/publish routines
-jar {
-    enabled = false
-}
-
 publishing {
     publications {
         maven(MavenPublication) {
