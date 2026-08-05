@@ -149,7 +149,7 @@ public class CLocalWithTypeCoprocessor implements IAnnotationCoprocessor {
             }
             if (variableIndex == null) {
                 throw new TransformerException(transformerMethod, transformer, "does not have an index, ordinal or name set for annotated parameter " + parameter.getAnnotationIndex())
-                        .help("e.g. @CLocalVariable(index = 1)");
+                        .help("e.g. @CLocalWithType(index = 1)");
             }
 
             Type variableType = null;
