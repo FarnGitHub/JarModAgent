@@ -24,7 +24,7 @@ public class CLocalWithTypeCoprocessor implements IAnnotationCoprocessor {
 
     @Override
     public MethodNode preprocess(TransformerManager transformerManager, ClassNode transformedClass, MethodNode transformedMethod, ClassNode transformer, MethodNode transformerMethod) {
-        this.parameters = CoprocessorUtils.getAnnotatedParameters(transformerMethod, CLocalWithTypeCoprocessor.class);
+        this.parameters = CoprocessorUtils.getAnnotatedParameters(transformerMethod, CLocalWithType.class);
         if (this.parameters == null) return transformerMethod; //No annotated parameters found
         transformedMethod.signature = null; //Remove the signature as it is no longer valid
         CoprocessorUtils.mergeParametersToArray(transformerMethod, this.parameters);
