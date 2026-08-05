@@ -1,5 +1,6 @@
 package xyz.wagyourtail.unimined.jarmodagent.transformer;
 
+import farn.jarmodagent.impl.CLocalWithTypeCoprocessor;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.mappings.annotation.AnnotationRemap;
 import net.lenni0451.classtransform.utils.ASMUtils;
@@ -20,6 +21,7 @@ public class RefmapSupportingTransformManager extends TransformerManager {
 
     public RefmapSupportingTransformManager(IClassProvider classProvider) {
         super(classProvider);
+        this.addCoprocessor(CLocalWithTypeCoprocessor::new);
     }
 
     public void addRefmap(Map<String, Map<String, String>> refmap) {
