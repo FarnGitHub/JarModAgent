@@ -152,7 +152,7 @@ public class CLocalWithTypeCoprocessor implements IAnnotationCoprocessor {
             }
 
             Type variableType = null;
-            if (parsedAnnotation.wasSet("loadOpcode")) {
+            if (parsedAnnotation.wasSet("type")) {
                 //A load opcode was set, so we can get the type from that
                 variableType = this.getType(annotation.type());
             } else {
