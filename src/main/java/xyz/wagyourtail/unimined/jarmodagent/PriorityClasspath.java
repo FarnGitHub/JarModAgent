@@ -1,5 +1,4 @@
-package xyz.wagyourtail.unimined.jarmodagent.transformer;
-
+package xyz.wagyourtail.unimined.jarmodagent;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,15 +13,17 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class PriorityClasspath extends URLClassLoader {
+
     Map<String, Supplier<byte[]>> allClasses = new HashMap<>();
 
     public PriorityClasspath(URL[] urls) {
-        super(urls, null);
+        super(urls, PriorityClasspath.class.getClassLoader());
     }
 
     @Override
     public void addURL(URL url) {
         super.addURL(url);
+        // get all classes from the jar into map
         try (ZipInputStream zis = new ZipInputStream(url.openStream())) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {

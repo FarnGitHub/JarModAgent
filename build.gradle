@@ -26,21 +26,22 @@ repositories {
         url = 'https://maven.quiltmc.org/repository/release'
     }
     maven { url 'https://jitpack.io' }
-    flatDir {
-        dirs 'libs'
-    }
+    maven {url 'https://api.modrinth.com/maven'}
+    maven {url 'https://maven.cloverclient.com/releases'}
 }
 
 dependencies {
     // class transform
     implementation 'net.lenni0451.classtransform:core:1.15.1'
+    implementation("net.lenni0451.classtransform:mixinstranslator:1.15.1")
 
     // qup
     implementation('org.quiltmc.qup:json:0.2.0') {
         transitive = false
     }
 
-    compileOnly name: 'legacyfix', version: '26.7.2'
+    compileOnly("maven.modrinth:legacyfix:26.10-b1.7.3")
+    compileOnly("pl.tomgirl:pylon:0.2.7")
 }
 
 compileJava {
@@ -55,6 +56,7 @@ jar {
     manifest {
         attributes(
             'Premain-Class': 'xyz.wagyourtail.unimined.jarmodagent.JarModAgent',
+            "Agent-Class": "xyz.wagyourtail.unimined.jarmodagent.JarModAgent",
             'Main-Class': 'xyz.wagyourtail.unimined.jarmodagent.JarModAgent',
             'Implementation-Version': project.version,
             'Can-Redefine-Classes': true,
