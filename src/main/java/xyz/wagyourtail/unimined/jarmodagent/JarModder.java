@@ -1,9 +1,9 @@
 package xyz.wagyourtail.unimined.jarmodagent;
 
-import farn.jarmodagent.FarnPatcher;
+import farn.jarmodagent.BytecodeTransformer;
+import farn.jarmodagent.SpecialPatcher;
 import net.lenni0451.classtransform.TransformerManager;
 import net.lenni0451.classtransform.mixinstranslator.MixinsTranslator;
-import net.lenni0451.classtransform.transformer.IBytecodeTransformer;
 import net.lenni0451.classtransform.utils.FailStrategy;
 import xyz.wagyourtail.unimined.jarmodagent.transformer.ClassProviderWithFallback;
 import xyz.wagyourtail.unimined.jarmodagent.transformer.refmap.RefmapAnnotationPreprocessor;
@@ -100,6 +100,7 @@ public class JarModder implements ClassFileTransformer {
         for (File file : extra) {
             boostrapModJar(file, transformBuilder, refmapBuilder, initializers);
         }
+        SpecialPatcher.postHandle(instrumentation);
         for (String transformer : transformers) {
             transformBuilder.addTransformer(transformer);
         }
@@ -164,11 +165,13 @@ public class JarModder implements ClassFileTransformer {
         file = file.getCanonicalFile();
         JarFile jf = new JarFile(file);
         System.out.println("[JarModAgent] Bootstrapping " + file.getName());
-        classProvider.priorityClasspath.addURL(file.toURI().toURL());
-        if (!Boolean.getBoolean(JarModAgent.DISABLE_INSERT_INTO_SYSTEM_CL)) {
-            instrumentation.appendToSystemClassLoaderSearch(jf);
+        if(SpecialPatcher.handleSpecialMod(jf)) return j;
+        else {
+            classProvider.priorityClasspath.addURL(file.toURI().toURL());
+            if (!Boolean.getBoolean(JarModAgent.DISABLE_INSERT_INTO_SYSTEM_CL)) {
+                instrumentation.appendToSystemClassLoaderSearch(jf);
+            }
         }
-        if(FarnPatcher.handleSpecialMod(jf)) return j;
         // get transforms from manifest
         Manifest mf = jf.getManifest();
         if (mf != null) {
@@ -301,22 +304,20 @@ public class JarModder implements ClassFileTransformer {
 
     @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
-        byte[] transformed = this.transform(loader, className);
-        if(!FarnPatcher.specialTransformer.isEmpty()) {
-            byte[] pretransformed = transformed != null ? transformed : classfileBuffer;
-            for(IBytecodeTransformer bytecode : FarnPatcher.specialTransformer) {
-                transformed = bytecode.transform(
+        byte[] transformed = this.transformJMA(loader, className);
+        if(!SpecialPatcher.specialTransformer.isEmpty()) {
+            for(BytecodeTransformer bytecode : SpecialPatcher.specialTransformer) {
+                byte[] specialTransformed = bytecode.transform(
                         dot(className),
-                        pretransformed,
-                        false
+                        transformed == null ? classfileBuffer : transformed
                 );
-                pretransformed = transformed;
+                if(specialTransformed != null) transformed = specialTransformed;
             }
         }
         return transformed;
     }
 
-    public byte[] transform(ClassLoader loader, String className) {
+    public byte[] transformJMA(ClassLoader loader, String className) {
         try {
             classProvider.setFallback(loader);
             Map<String, URL> urls = enumerationToList(loader.getResources(

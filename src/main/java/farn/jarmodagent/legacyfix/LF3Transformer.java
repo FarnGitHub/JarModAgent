@@ -1,16 +1,16 @@
 package farn.jarmodagent.legacyfix;
 
+import farn.jarmodagent.BytecodeTransformer;
 import javassist.ByteArrayClassPath;
 import javassist.ClassPool;
 import javassist.CtClass;
-import net.lenni0451.classtransform.transformer.IBytecodeTransformer;
 import uk.betacraft.legacyfix.patch.Patcher;
 import uk.betacraft.legacyfix.patch.api.CtTransformer;
 import uk.betacraft.legacyfix.patch.api.Transformer;
 
 import java.util.List;
 
-public class LF3Transformer implements IBytecodeTransformer {
+public class LF3Transformer implements BytecodeTransformer {
 
     private final Patcher patcher;
     private final ClassPool mainPool;
@@ -25,7 +25,7 @@ public class LF3Transformer implements IBytecodeTransformer {
     }
 
     @Override
-    public byte[] transform(String name, byte[] bytecode, boolean calculateStackMapFrames) {
+    public byte[] transform(String name, byte[] bytecode) {
         if (bytecode == null || name.startsWith("javassist")) {
             return null;
         } else {
