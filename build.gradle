@@ -76,6 +76,7 @@ publishing {
     publications {
         maven(MavenPublication) {
             from components.java
+            from components.shadow
 
             groupId = project.group
             artifactId = project.archives_base_name
